@@ -3,13 +3,18 @@
 require('dotenv').config();
 const express = require('express');
 const morgan = require('morgan');
-const winston = require('winston');
 const uuid = require('uuid/v4');
+const cardRouter = express.Router();
 const cors = require('cors');
 const helmet = require('helmet');
 const { NODE_ENV } = require('./config');
+const cardRouter = require('./card/card-router');
+const listRouter = require('./list/list-router');
 
 const app = express();
+
+app.use(cardRouter);
+app.use(listRouter);
 
 const morganOption = (NODE_ENV === 'production')
   ? 'tiny'
@@ -18,42 +23,19 @@ const morganOption = (NODE_ENV === 'production')
 app.use(morgan(morganOption));
 app.use(helmet());
 app.use(cors());
-app.use(express.json());
 
-// set up winston
-const logger = winston.createLogger({
-  level: 'info',
-  format: winston.format.json(),
-  transports: [
-    new winston.transports.File({ filename: 'info.log' })
-  ]
-});
 
-if (NODE_ENV !== 'production') {
-  logger.add(new winston.transports.Console({
-    format: winston.format.simple()
-  }));
-}
-
-const cards = [{
-  id: 1,
-  title: 'Task One',
-  content: 'This is card one'
-}];
 const lists = [{
   id: 1,
   header: 'List One',
   cardIds: [1]
 }];
 
+//GET
 app.get('/', (req, res) =>{
   res.json({message: 'Hello, world!'});
 });
 
-app.get('/card', (req, res) => {
-  res
-    .json(cards);
-});
 
 app.get('/list', (req, res) => {
   res
@@ -90,23 +72,8 @@ app.get('/list/:id', (req, res) => {
   res.json(list);
 });
 
-app.post('/card', (req, res) => {
+//POST
 
-
-  const { title, content } = req.body;
-  if (!title) {
-    logger.error(`Title is required`);
-    return res
-      .status(400)
-      .send('Invalid data');
-  }
-
-  if (!content) {
-    logger.error(`Content is required`);
-    return res
-      .status(400)
-      .send('Invalid data');
-  }
 
   // get an id
   const id = uuid();
@@ -174,6 +141,7 @@ app.post('/list', (req, res) => {
     .json({id});
 });
 
+//DELETE
 app.delete('/list/:id', (req, res) => {
   const { id } = req.params;
 
@@ -222,6 +190,24 @@ app.delete('/card/:id', (req, res) => {
     .end();
 });
 
+//card router
+cardRouter
+  .route('/card')
+  .get((req, res) => {/* code not shown */})
+  .post((req, res) => {/* code not shown */});
+
+cardRouter
+  .route('/card/:id')cc
+  .get((req, res) => {/* code not shown */})
+  .delete((req, res) => {/* code not shown */});
+
+const bodyParser = express.json();
+
+cardRouter
+  .route('/card')
+  .post(bodyParser, (req, res) => {/* code not shown */});
+
+//Validate Token
 app.use(function validateBearerToken(req, res, next) {
   const apiToken = process.env.API_TOKEN
   const authToken = req.get('Authorization')
